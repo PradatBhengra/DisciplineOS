@@ -1,0 +1,11 @@
+# Runs MongoDB locally with data persisted to ./data/mongo
+# Usage: docker compose up -d
+services:
+  mongo:
+    image: mongo:7
+    container_name: discipline-os-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db

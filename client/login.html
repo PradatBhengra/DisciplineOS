@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | Discipline OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="sb-logo-icon">📋</span>
+            <span class="sb-logo-text">Discipline OS</span>
+        </div>
+        <p class="auth-tagline">A system for students who want control, not motivation</p>
+
+        <div class="pill-group auth-tabs">
+            <button class="pill active" id="tab-login">Sign in</button>
+            <button class="pill" id="tab-register">Create account</button>
+        </div>
+
+        <div class="auth-error" id="auth-error"></div>
+
+        <!-- LOGIN -->
+        <form id="form-login" class="auth-form">
+            <div class="form-grp"><label>Email</label><input type="email" id="li-email" required autocomplete="email"></div>
+            <div class="form-grp"><label>Password</label><input type="password" id="li-pass" required autocomplete="current-password"></div>
+            <button type="submit" class="btn auth-btn" id="btn-login">Sign in</button>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="form-register" class="auth-form" style="display:none">
+            <div class="form-grp"><label>Name</label><input type="text" id="rg-name" required autocomplete="name"></div>
+            <div class="form-grp"><label>Email</label><input type="email" id="rg-email" required autocomplete="email"></div>
+            <div class="form-grp"><label>Password (min 6 chars)</label><input type="password" id="rg-pass" required minlength="6" autocomplete="new-password"></div>
+            <button type="submit" class="btn auth-btn" id="btn-register">Create account</button>
+        </form>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // Already signed in? Straight to the app.
+        if (API.getToken()) window.location.href = '/';
+
+        const err = document.getElementById('auth-error');
+        const showErr = (m) => { err.textContent = m; err.style.display = 'block'; };
+        const hideErr = () => { err.style.display = 'none'; };
+
+        const tabL = document.getElementById('tab-login');
+        const tabR = document.getElementById('tab-register');
+        const formL = document.getElementById('form-login');
+        const formR = document.getElementById('form-register');
+
+        tabL.onclick = () => { tabL.classList.add('active'); tabR.classList.remove('active'); formL.style.display = ''; formR.style.display = 'none'; hideErr(); };
+        tabR.onclick = () => { tabR.classList.add('active'); tabL.classList.remove('active'); formR.style.display = ''; formL.style.display = 'none'; hideErr(); };
+
+        formL.addEventListener('submit', async (e) => {
+            e.preventDefault(); hideErr();
+            const btn = document.getElementById('btn-login');
+            btn.disabled = true; btn.textContent = 'Signing in…';
+            try {
+                const { token, user } = await API.login(
+                    document.getElementById('li-email').value.trim(),
+                    document.getElementById('li-pass').value
+                );
+                API.setSession(token, user);
+                window.location.href = '/';
+            } catch (ex) {
+                showErr(ex.message);
+                btn.disabled = false; btn.textContent = 'Sign in';
+            }
+        });
+
+        formR.addEventListener('submit', async (e) => {
+            e.preventDefault(); hideErr();
+            const btn = document.getElementById('btn-register');
+            btn.disabled = true; btn.textContent = 'Creating…';
+            try {
+                const { token, user } = await API.register(
+                    document.getElementById('rg-name').value.trim(),
+                    document.getElementById('rg-email').value.trim(),
+                    document.getElementById('rg-pass').value
+                );
+                API.setSession(token, user);
+                window.location.href = '/';
+            } catch (ex) {
+                showErr(ex.message);
+                btn.disabled = false; btn.textContent = 'Create account';
+            }
+        });
+    </script>
+</body>
+</html>

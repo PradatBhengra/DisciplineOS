@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discipline OS | Student Planner</title>
+    <meta name="description" content="A minimalist discipline-focused student planner. Track habits, marks, attendance, and tasks.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <script>
+        // Kick unauthenticated users to the login page before anything renders
+        if (!localStorage.getItem('dos_token')) window.location.replace('/login.html');
+    </script>
+
+    <div class="loading-screen" id="loading-screen">Loading your data…</div>
+
+    <!-- === SIDEBAR === -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sb-top">
+            <div class="sb-logo">
+                <span class="sb-logo-icon">📋</span>
+                <span class="sb-logo-text">Discipline OS</span>
+            </div>
+            <p class="sb-tagline">A system for students who want control, not motivation</p>
+        </div>
+        <nav class="sb-nav">
+            <button class="sb-link active" data-page="dashboard" id="nav-dashboard">
+                <span class="sb-link-icon">📊</span> Dashboard
+            </button>
+            <button class="sb-link" data-page="classes" id="nav-classes">
+                <span class="sb-link-icon">🎓</span> Classes
+            </button>
+            <button class="sb-link" data-page="marks" id="nav-marks">
+                <span class="sb-link-icon">📝</span> Marks Tracker
+            </button>
+            <button class="sb-link" data-page="todos" id="nav-todos">
+                <span class="sb-link-icon">✅</span> To-Do
+            </button>
+            <button class="sb-link" data-page="habits" id="nav-habits">
+                <span class="sb-link-icon">🔥</span> Habit Tracker
+            </button>
+            <button class="sb-link" data-page="attendance" id="nav-attendance">
+                <span class="sb-link-icon">📅</span> Attendance
+            </button>
+        </nav>
+        <div class="sb-footer">
+            <div class="sb-user">
+                <span id="sb-username">👤</span>
+                <button class="logout-btn" id="btn-logout">Logout</button>
+            </div>
+            <div class="sb-date" id="sb-date"></div>
+        </div>
+    </aside>
+
+    <!-- Mobile top bar -->
+    <header class="topbar" id="topbar">
+        <button class="topbar-menu" id="topbar-menu">☰</button>
+        <span class="topbar-title">Discipline OS</span>
+    </header>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- === MAIN === -->
+    <main class="main" id="main">
+
+        <!-- ===== DASHBOARD ===== -->
+        <section class="page active" id="page-dashboard">
+            <!-- Hero Banner -->
+            <div class="hero-banner">
+                <img src="assets/images/hero-banner.gif" alt="" class="hero-img">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <h1 id="hero-greeting">Discipline OS</h1>
+                    <p class="hero-sub">A system for people who want control, not motivation</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Layout: 2-col like Discipline OS -->
+            <div class="dash-layout">
+                <!-- LEFT: Analytics -->
+                <div class="dash-left">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">⚙️</span>
+                            <h3>Analytics</h3>
+                        </div>
+                        <div class="analytics-list" id="analytics-list">
+                            <!-- filled dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">📂</span>
+                            <h3>Quick Access</h3>
+                        </div>
+                        <div class="quick-links">
+                            <button class="quick-link" data-page-link="classes">🎓 My Classes</button>
+                            <button class="quick-link" data-page-link="marks">📝 Marks Tracker</button>
+                            <button class="quick-link" data-page-link="todos">✅ To-Do List</button>
+                            <button class="quick-link" data-page-link="habits">🔥 Habit Tracker</button>
+                            <button class="quick-link" data-page-link="attendance">📅 Attendance</button>
+                            <button class="quick-link" id="btn-export-notion">📤 Export Data (CSV)</button>
+                        </div>
+                    </div>
+
+                    <div class="card decorative-card">
+                        <img src="assets/images/decoration.webp" alt="" class="deco-img">
+                    </div>
+                </div>
+
+                <!-- RIGHT: Today + Tasks -->
+                <div class="dash-right">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">✨</span>
+                            <h3>Today</h3>
+                            <span class="card-date" id="card-today-date"></span>
+                        </div>
+                        <div id="today-habits-dash">
+                            <div class="empty-small">No habits tracked yet</div>
+                        </div>
+                        <div class="progress-block-row" id="dash-progress-blocks"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">📌</span>
+                            <h3>Pending Tasks</h3>
+                            <button class="card-link" data-page-link="todos">View all →</button>
+                        </div>
+                        <div id="pending-tasks-dash">
+                            <div class="empty-small">All caught up!</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="callout">
+                            <div class="callout-bar"></div>
+                            <p class="callout-text"><em>"Consistency beats motivation. Show up every day."</em></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== CLASSES ===== -->
+        <section class="page" id="page-classes">
+            <div class="page-top">
+                <h1 class="page-title">🎓 My Classes</h1>
+                <button class="btn" id="btn-add-class">+ Add Course</button>
+            </div>
+            <div class="card table-card">
+                <table class="tbl" id="classes-table">
+                    <thead>
+                        <tr><th>Course Name</th><th>Instructor</th><th>Credits</th><th>Attendance %</th><th></th></tr>
+                    </thead>
+                    <tbody id="classes-tbody"></tbody>
+                </table>
+                <div class="empty" id="classes-empty">
+                    <img src="assets/images/empty-state.gif" alt="" class="empty-img">
+                    <p>No courses added yet</p>
+                    <button class="btn btn-sm" id="btn-add-class-empty">+ Add your first course</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== MARKS ===== -->
+        <section class="page" id="page-marks">
+            <div class="page-top">
+                <h1 class="page-title">📝 Marks Tracker</h1>
+                <button class="btn" id="btn-add-mark">+ Add Subject</button>
+            </div>
+
+            <div class="marks-rings" id="marks-rings"></div>
+
+            <div class="card table-card">
+                <table class="tbl" id="marks-table">
+                    <thead>
+                        <tr><th>Subject</th><th>Quiz 1</th><th>Mid Sem</th><th>Quiz 2</th><th>Assign.</th><th>End Sem</th><th>Total</th><th>Grade</th><th></th></tr>
+                    </thead>
+                    <tbody id="marks-tbody"></tbody>
+                </table>
+                <div class="empty" id="marks-empty">
+                    <p>No subjects added yet</p>
+                    <button class="btn btn-sm" id="btn-add-mark-empty">+ Add subject</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TO-DO ===== -->
+        <section class="page" id="page-todos">
+            <div class="page-top">
+                <h1 class="page-title">✅ To-Do List</h1>
+                <div class="page-top-actions">
+                    <div class="pill-group">
+                        <button class="pill active" data-filter="all">All</button>
+                        <button class="pill" data-filter="pending">Pending</button>
+                        <button class="pill" data-filter="done">Done</button>
+                    </div>
+                    <button class="btn" id="btn-add-todo">+ Add Task</button>
+                </div>
+            </div>
+            <div class="todo-list" id="todo-list">
+                <div class="empty" id="todos-empty">
+                    <img src="assets/images/decoration.webp" alt="" class="empty-img">
+                    <p>All caught up! No tasks yet.</p>
+                    <button class="btn btn-sm" id="btn-add-todo-empty">+ Add task</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HABITS ===== -->
+        <section class="page" id="page-habits">
+            <div class="page-top">
+                <h1 class="page-title">🔥 Habit Tracker</h1>
+                <div class="page-top-actions">
+                    <div class="week-nav">
+                        <button class="icon-btn" id="habit-prev-week">‹</button>
+                        <span id="habit-week-label">This Week</span>
+                        <button class="icon-btn" id="habit-next-week">›</button>
+                    </div>
+                    <button class="btn" id="btn-add-habit">+ Add Habit</button>
+                </div>
+            </div>
+
+            <div class="callout mb-16">
+                <div class="callout-bar"></div>
+                <p class="callout-text"><em>A day counts as a win when you complete at least 75% of your habits</em></p>
+            </div>
+
+            <div id="habits-container">
+                <div class="empty" id="habits-empty">
+                    <img src="assets/images/empty-state.gif" alt="" class="empty-img">
+                    <p>No habits being tracked</p>
+                    <button class="btn btn-sm" id="btn-add-habit-empty">+ Add habit</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== ATTENDANCE ===== -->
+        <section class="page" id="page-attendance">
+            <div class="page-top">
+                <h1 class="page-title">📅 Attendance Tracker</h1>
+                <button class="btn" id="btn-add-attendance">+ Add Subject</button>
+            </div>
+            <div class="att-grid" id="att-grid">
+                <div class="empty" id="attendance-empty">
+                    <p>No subjects being tracked</p>
+                    <button class="btn btn-sm" id="btn-add-attendance-empty">+ Add subject</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- === MODAL === -->
+    <div class="modal-bg" id="modal-bg">
+        <div class="modal" id="modal">
+            <div class="modal-head">
+                <h2 id="modal-title">Add</h2>
+                <button class="modal-x" id="modal-x">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-foot">
+                <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+                <button class="btn" id="modal-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-wrap" id="toast-wrap"></div>
+
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

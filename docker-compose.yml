@@ -6,6 +6,6 @@ services:
     container_name: discipline-os-mongo
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"  # local only; this MongoDB has no password
     volumes:
       - ./data/mongo:/data/db

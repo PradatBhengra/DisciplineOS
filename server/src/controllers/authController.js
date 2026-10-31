@@ -7,6 +7,7 @@ const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: 
 exports.register = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
+        if (typeof email !== 'string' || typeof password !== 'string') { res.status(400); throw new Error('Email and password are required'); }
         const exists = await User.findOne({ email });
         if (exists) { res.status(400); throw new Error('An account with this email already exists'); }
         const user = await User.create({ name, email, password });
@@ -21,7 +22,8 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
-        if (!email || !password) { res.status(400); throw new Error('Email and password are required'); }
+        // Must be strings, otherwise {"$regex": "."} would be passed through as a query operator
+        if (!email || !password || typeof email !== 'string' || typeof password !== 'string') { res.status(400); throw new Error('Email and password are required'); }
         const user = await User.findOne({ email }).select('+password');
         if (!user || !(await user.matchPassword(password))) {
             res.status(401); throw new Error('Invalid email or password');

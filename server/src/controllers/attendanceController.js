@@ -12,11 +12,13 @@ exports.mark = async (req, res, next) => {
     try {
         const { status } = req.body;
         if (!['present', 'absent'].includes(status)) { res.status(400); throw new Error('status must be present or absent'); }
-        const doc = await AttendanceSubject.findOne({ _id: req.params.id, user: req.user._id });
+        // $inc is atomic, so two quick taps can't overwrite each other's count
+        const doc = await AttendanceSubject.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
+            { $inc: { totalClasses: 1, attended: status === 'present' ? 1 : 0 } },
+            { new: true }
+        );
         if (!doc) { res.status(404); throw new Error('Not found'); }
-        doc.totalClasses += 1;
-        if (status === 'present') doc.attended += 1;
-        await doc.save();
         res.json(doc);
     } catch (err) { next(err); }
 };

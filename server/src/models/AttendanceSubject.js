@@ -7,6 +7,12 @@ const attendanceSchema = new mongoose.Schema({
     attended: { type: Number, min: 0, default: 0 }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
+// Checked here rather than on the field so it also runs when only totalClasses changes
+attendanceSchema.pre('validate', function (next) {
+    if (this.attended > this.totalClasses) this.invalidate('attended', 'Attended cannot be more than total classes');
+    next();
+});
+
 attendanceSchema.virtual('percentage').get(function () {
     return this.totalClasses > 0 ? Math.round((this.attended / this.totalClasses) * 100) : 0;
 });

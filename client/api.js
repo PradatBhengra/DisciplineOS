@@ -71,7 +71,7 @@ const API = (() => {
         createHabit: (b) => request('/habits', { method: 'POST', body: b }),
         updateHabit: (id, b) => request(`/habits/${id}`, { method: 'PUT', body: b }),
         deleteHabit: (id) => request(`/habits/${id}`, { method: 'DELETE' }),
-        toggleHabitCheck: (id, weekKey, day) => request(`/habits/${id}/checks`, { method: 'PUT', body: { weekKey, day } }),
+        setHabitCheck: (id, weekKey, day, checked) => request(`/habits/${id}/checks`, { method: 'PUT', body: { weekKey, day, checked } }),
 
         // Attendance
         createAttendance: (b) => request('/attendance', { method: 'POST', body: b }),

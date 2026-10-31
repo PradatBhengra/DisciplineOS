@@ -17,21 +17,24 @@ exports.remove = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-// PUT /api/habits/:id/checks - toggles a day cell { weekKey, day }
-exports.toggleCheck = async (req, res, next) => {
+// PUT /api/habits/:id/checks - sets a day cell { weekKey, day, checked }
+// Setting an explicit value instead of toggling makes repeated requests safe
+exports.setCheck = async (req, res, next) => {
     try {
-        const { weekKey, day } = req.body;
-        if (!weekKey || !day) { res.status(400); throw new Error('weekKey and day are required'); }
+        const { weekKey, day, checked } = req.body;
+        if (typeof weekKey !== 'string' || typeof day !== 'string' || typeof checked !== 'boolean') {
+            res.status(400); throw new Error('weekKey, day and checked are required');
+        }
         const habit = await Habit.findOne({ _id: req.params.id, user: req.user._id });
         if (!habit) { res.status(404); throw new Error('Habit not found'); }
 
         const filter = { user: req.user._id, habit: habit._id, weekKey, day };
-        const existing = await HabitCheck.findOne(filter);
-        if (existing) {
-            await existing.deleteOne();
-            return res.json({ key: `${habit._id}_${weekKey}_${day}`, checked: false });
+        if (checked) {
+            // a duplicate key error just means the day is already checked
+            await HabitCheck.create(filter).catch(err => { if (err.code !== 11000) throw err; });
+        } else {
+            await HabitCheck.deleteOne(filter);
         }
-        await HabitCheck.create(filter);
-        res.json({ key: `${habit._id}_${weekKey}_${day}`, checked: true });
+        res.json({ key: `${habit._id}_${weekKey}_${day}`, checked });
     } catch (err) { next(err); }
 };

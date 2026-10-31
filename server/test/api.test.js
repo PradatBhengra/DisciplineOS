@@ -66,3 +66,36 @@ test('marks must be positive and fit within max marks', async () => {
     assert.strictEqual((await api('/marks', 'POST', { name: 'Chem', maxMarks: 10, quiz1: 8, endSem: 5 })).status, 400);
     assert.strictEqual((await api('/marks', 'POST', { name: 'Bio', maxMarks: 10, quiz1: -2 })).status, 400);
 });
+
+test('setting a habit check is safe to repeat', async () => {
+    const { body: habit } = await api('/habits', 'POST', { name: 'Read' });
+    const cell = { weekKey: '2026-10-25', day: 'Mon' };
+    const key = `${habit.id}_2026-10-25_Mon`;
+
+    const results = await Promise.all([1, 2].map(() => api(`/habits/${habit.id}/checks`, 'PUT', { ...cell, checked: true })));
+    assert.deepStrictEqual(results.map(r => r.status), [200, 200]);
+    assert.strictEqual((await api('/data')).body.habitChecks[key], true);
+
+    await api(`/habits/${habit.id}/checks`, 'PUT', { ...cell, checked: false });
+    assert.strictEqual((await api('/data')).body.habitChecks[key], undefined);
+});
+
+test('habit checks need the new week key format', async () => {
+    const { body: habit } = await api('/habits', 'POST', { name: 'Gym' });
+    const res = await api(`/habits/${habit.id}/checks`, 'PUT', { weekKey: '2026W925', day: 'Mon', checked: true });
+    assert.strictEqual(res.status, 400);
+});
+
+test('todo deadline must be a date or empty', async () => {
+    assert.strictEqual((await api('/todos', 'POST', { name: 'Essay', deadline: '<img src=x onerror=alert(1)>' })).status, 400);
+    assert.strictEqual((await api('/todos', 'POST', { name: 'Essay', deadline: '2026-11-02' })).status, 201);
+    assert.strictEqual((await api('/todos', 'POST', { name: 'Essay', deadline: '' })).status, 201);
+});
+
+test('old week keys convert to the date of their Sunday', () => {
+    const { convert } = require('../scripts/migrate-week-keys');
+    assert.strictEqual(convert('2026W925'), '2026-10-25');
+    assert.strictEqual(convert('2026W011'), '2026-01-11');
+    assert.strictEqual(convert('2026W116'), '2026-12-06');
+    assert.strictEqual(convert('2028W113'), null); // Feb 13 or Dec 3, both Sundays
+});

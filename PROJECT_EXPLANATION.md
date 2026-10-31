@@ -46,9 +46,9 @@ Course.findOne({ _id: req.params.id, user: req.user._id })
 
 A valid token for user A simply cannot match user B's documents. There's no separate permission check that someone could forget to write.
 
-**One CRUD factory instead of five controllers.** Courses, marks, todos, habits and attendance all need the same list/create/update/delete handlers with the same user scoping. `crudFactory(Model, allowedFields)` generates them once. The field whitelist doubles as mass assignment protection: a request can't smuggle in `user: someoneElse` or set a grade directly, because anything outside the whitelist is dropped. Habits and attendance extend the factory with their own endpoints (check toggling with cascade delete, present/absent marking).
+**One CRUD factory instead of five controllers.** Courses, marks, todos, habits and attendance all need the same list/create/update/delete handlers with the same user scoping. `crudFactory(Model, allowedFields)` generates them once. The field whitelist doubles as mass assignment protection: a request can't smuggle in `user: someoneElse` or set a grade directly, because anything outside the whitelist is dropped. Habits and attendance extend the factory with their own endpoints (setting habit checks with cascade delete, present/absent marking).
 
-**Habit checks as documents.** A checked day is a `HabitCheck` document and unchecking deletes it. There's a unique compound index on `(user, habit, weekKey, day)`, so two simultaneous toggles can't create duplicates, and deleting a habit cleans up its whole history with one `deleteMany`. A missing document just means "not done", so stale flags never accumulate.
+**Habit checks as documents.** A checked day is a `HabitCheck` document and unchecking deletes it. The client sends the value it wants (`checked: true/false`) rather than "toggle", so a repeated request can't flip a day back. A unique compound index on `(user, habit, weekKey, day)` stops simultaneous requests from creating duplicates, and deleting a habit cleans up its whole history with one `deleteMany`. A missing document just means "not done", so stale flags never accumulate.
 
 ## Security, in one table
 

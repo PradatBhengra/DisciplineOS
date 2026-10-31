@@ -132,21 +132,22 @@
     function renderDash() {
         const habits = state.habits;
         const checks = state.habitChecks;
+        const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+        const weekKey = getWeekKey(0);
         const alist = document.getElementById('analytics-list');
         alist.innerHTML = habits.map(h => {
-            const count = Object.keys(checks).filter(k => k.startsWith(h.id) && checks[k]).length;
-            const pct = Math.min(Math.round((count / 7) * 100), 100);
+            // this week's checks only, same as the progress column on the habits page
+            const count = Object.keys(checks).filter(k => k.startsWith(`${h.id}_${weekKey}_`) && checks[k]).length;
+            const pct = Math.round((count / 7) * 100);
             return `
                 <div class="analytics-item">
-                    <div class="ana-top"><span>${esc(h.name)}</span><span>${pct.toFixed(2)}%</span></div>
+                    <div class="ana-top"><span>${esc(h.name)}</span><span>${pct}%</span></div>
                     <div class="ana-bar">${asciiBar(pct)}</div>
                 </div>
             `;
         }).join('') || '<div class="empty-small">No habits tracked yet</div>';
 
         // Today's Habits
-        const dayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
-        const weekKey = getWeekKey(0);
         const thDash = document.getElementById('today-habits-dash');
         thDash.innerHTML = habits.length ? habits.map(h => {
             const key = `${h.id}_${weekKey}_${dayKey}`;
@@ -166,7 +167,7 @@
             <div class="check-item">
                 <div class="check-box" style="visibility:hidden"></div>
                 <span class="check-text">${esc(t.name)}</span>
-                <span class="check-meta">${t.deadline || ''}</span>
+                <span class="check-meta">${esc(t.deadline)}</span>
             </div>
         `).join('') : '<div class="empty-small">All caught up!</div>';
     }
@@ -292,19 +293,22 @@
 
     // ========== TODOS ==========
     let tdFilt = 'all';
+    // Kept as references because rendering a list replaces the container's innerHTML,
+    // which removes the empty state element from the page
+    const todosEmpty = document.getElementById('todos-empty');
     function renderTodos() {
         const all = state.todos;
         const list = document.getElementById('todo-list');
         const f = tdFilt === 'all' ? all : tdFilt === 'pending' ? all.filter(x => !x.done) : all.filter(x => x.done);
 
-        if (!all.length) { document.getElementById('todos-empty').style.display = 'block'; list.innerHTML = ''; list.appendChild(document.getElementById('todos-empty')); return; }
-        document.getElementById('todos-empty').style.display = 'none';
+        if (!all.length) { list.innerHTML = ''; list.appendChild(todosEmpty); todosEmpty.style.display = 'block'; return; }
+        todosEmpty.style.display = 'none';
 
         list.innerHTML = f.map(t => `
             <div class="check-item ${t.done ? 'done' : ''}">
                 <button class="check-box ${t.done ? 'checked' : ''}" onclick="togTd('${t.id}')">✓</button>
                 <span class="check-text">${esc(t.name)}</span>
-                <span class="check-meta">${t.deadline || ''} ${t.estimatedHours ? t.estimatedHours + 'h' : ''}</span>
+                <span class="check-meta">${esc(t.deadline)} ${t.estimatedHours ? t.estimatedHours + 'h' : ''}</span>
                 <button class="tbl-btn" onclick="editTd('${t.id}')">Edit</button>
                 <button class="tbl-btn del" onclick="delTd('${t.id}')">Del</button>
             </div>
@@ -327,7 +331,7 @@
     function formTd(ex = null) {
         openModal(ex ? 'Edit Task' : 'Add Task', `
             <div class="form-grp"><label>Name</label><input type="text" id="ft-name" value="${esc(ex?.name || '')}"></div>
-            <div class="form-grp"><label>Deadline</label><input type="date" id="ft-dead" value="${ex?.deadline || ''}"></div>
+            <div class="form-grp"><label>Deadline</label><input type="date" id="ft-dead" value="${esc(ex?.deadline)}"></div>
             <div class="form-grp"><label>Est. Hours</label><input type="number" id="ft-hrs" value="${ex?.estimatedHours ?? ''}"></div>
         `, () => withSaving(async () => {
             const hrs = document.getElementById('ft-hrs').value;
@@ -364,16 +368,18 @@
 
     // ========== HABITS ==========
     let hwOff = 0;
+    // Local date of the week's Sunday, e.g. "2026-10-25"
     function getWeekKey(off) {
         const d = new Date(); d.setDate(d.getDate() - d.getDay() + (off * 7));
-        return d.getFullYear() + 'W' + d.getMonth() + d.getDate();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    const habitsEmpty = document.getElementById('habits-empty');
     function renderHabits() {
         const hb = state.habits;
         const ck = state.habitChecks;
         const cont = document.getElementById('habits-container');
-        if (!hb.length) { cont.innerHTML = ''; cont.appendChild(document.getElementById('habits-empty')); document.getElementById('habits-empty').style.display = 'block'; return; }
+        if (!hb.length) { cont.innerHTML = ''; cont.appendChild(habitsEmpty); habitsEmpty.style.display = 'block'; return; }
 
         document.getElementById('habit-week-label').textContent = hwOff === 0 ? 'This Week' : hwOff < 0 ? Math.abs(hwOff) + ' wks ago' : hwOff + ' wks ahead';
         const dnames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -414,17 +420,22 @@
     }
 
     // Single toggle used by both the dashboard and the weekly grid
+    const savingChecks = new Set();
     window.togHabit = async (id, d, w) => {
         const key = `${id}_${w}_${d}`;
+        if (savingChecks.has(key)) return; // ignore double clicks until the first one is saved
+        savingChecks.add(key);
+        const checked = !state.habitChecks[key];
         // optimistic
-        state.habitChecks[key] = !state.habitChecks[key];
+        state.habitChecks[key] = checked;
         renderHabits(); renderDash();
         try {
-            const res = await API.toggleHabitCheck(id, w, d);
-            state.habitChecks[res.key] = res.checked;
+            await API.setHabitCheck(id, w, d, checked);
         } catch (err) {
-            state.habitChecks[key] = !state.habitChecks[key];
+            state.habitChecks[key] = !checked;
             renderHabits(); renderDash(); oops(err);
+        } finally {
+            savingChecks.delete(key);
         }
     };
 
@@ -458,10 +469,10 @@
     };
 
     // ========== ATTENDANCE ==========
+    const emp = document.getElementById('attendance-empty');
     function renderAttendance() {
         const att = state.attendance;
         const grid = document.getElementById('att-grid');
-        const emp = document.getElementById('attendance-empty');
         if (!att.length) { grid.innerHTML = ''; grid.appendChild(emp); emp.style.display = 'block'; return; }
         emp.style.display = 'none';
 
@@ -532,7 +543,8 @@
     };
 
     // Utils
-    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    // Escapes quotes too, since it's also used inside value="..." attributes
+    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`); }
 
     // ========== EXPORT (CSV) ==========
     function toCSVRow(arr) {

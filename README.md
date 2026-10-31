@@ -60,7 +60,7 @@ Secrets only live in `server/.env`. The server refuses to start without a `JWT_S
 | PUT/DELETE | `/api/todos/:id` | update / delete task |
 | GET/POST | `/api/habits` | list / create habit |
 | PUT/DELETE | `/api/habits/:id` | update / delete habit (also deletes its checks) |
-| PUT | `/api/habits/:id/checks` | toggle a day check `{weekKey, day}` |
+| PUT | `/api/habits/:id/checks` | set a day check `{weekKey, day, checked}` |
 | GET/POST | `/api/attendance` | list / create subject |
 | PUT/DELETE | `/api/attendance/:id` | update / delete subject |
 | PATCH | `/api/attendance/:id/mark` | mark `{status: present\|absent}` |

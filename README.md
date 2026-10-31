@@ -85,13 +85,22 @@ npm run dev
 
 Open http://localhost:5000. Express serves the frontend and the API from the same port, so there's nothing else to start.
 
+### Tests
+
+```bash
+cd server
+npm test
+```
+
+The tests run against an in-memory MongoDB, so they don't touch your data. They need Node 20.19+, and the first install downloads a MongoDB binary, which takes a few minutes.
+
 ## Deploying
 
 I run it on Render's free tier with MongoDB Atlas:
 
 1. Create a free M0 cluster on Atlas, add a database user, allow access from anywhere, and copy the connection string.
 2. On Render, create a Web Service from this repo with root directory `server`, build command `npm install`, start command `npm start`.
-3. Set `MONGO_URI`, `JWT_SECRET` and `NODE_ENV=production` in the environment variables.
+3. Set `MONGO_URI`, `JWT_SECRET`, `NODE_ENV=production` and `TRUST_PROXY=1` in the environment variables. `TRUST_PROXY` makes the rate limiter see each visitor's real IP instead of Render's proxy.
 
 The free tier sleeps after ~15 minutes idle, so the first request after a while takes a bit to wake up.
 
@@ -99,7 +108,6 @@ The free tier sleeps after ~15 minutes idle, so the first request after a while 
 
 - Refresh tokens in httpOnly cookies instead of keeping the JWT in localStorage
 - Streak stats for habits, computed server side
-- Tests with Jest + Supertest
 
 See [PROJECT_EXPLANATION.md](PROJECT_EXPLANATION.md) for a longer writeup on how it works and why I picked each piece.
 

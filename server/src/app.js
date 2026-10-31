@@ -6,6 +6,10 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// Behind a proxy like Render set TRUST_PROXY=1, otherwise every request has the
+// proxy's IP and all users share one rate limit bucket
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY));
+
 app.use(helmet({ contentSecurityPolicy: false })); // CSP off so Google Fonts + inline handlers work
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));

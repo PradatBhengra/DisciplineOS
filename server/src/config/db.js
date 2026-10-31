@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+// Wraps any {"$...": ...} object from user input in $eq so it can't act as a query operator
+mongoose.set('sanitizeFilter', true);
+
 const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGO_URI);

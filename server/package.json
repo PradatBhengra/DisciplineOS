@@ -5,7 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -18,8 +19,9 @@
     "mongoose": "^8.5.0"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
     "nodemon": "^3.1.4"
   },
-  "author": "Md Zaid Alam",
+  "author": "Pradat Nelson Bhengra",
   "license": "MIT"
 }

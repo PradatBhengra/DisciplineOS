@@ -59,10 +59,11 @@ A valid token for user A simply cannot match user B's documents. There's no sepa
 | Authorization | every query filtered by `req.user._id` |
 | Brute force | rate limiting on the auth endpoints |
 | Mass assignment | field whitelist in the CRUD factory |
+| NoSQL injection | Mongoose `sanitizeFilter`, auth fields must be strings |
 | Bad input | Mongoose schema validation, 100kb JSON body limit |
 | XSS | user strings pass through an HTML escaping helper before rendering |
 | Info leakage | stack traces off in production, generic login error message |
-| Secrets | `.env` gitignored, startup fails without JWT_SECRET |
+| Secrets | `.env` gitignored, startup fails without JWT_SECRET or MONGO_URI |
 
 ## Data model
 
@@ -81,4 +82,4 @@ All models have createdAt/updatedAt timestamps.
 
 ## What's next
 
-Refresh tokens in httpOnly cookies. Server side streak computation for habits (current and longest streak per habit as an aggregation). Jest + Supertest integration tests against an in-memory MongoDB. And eventually a React rewrite of the client; the state object plus render functions in `app.js` map almost one to one onto components with hooks, so most of the logic would carry over.
+Refresh tokens in httpOnly cookies. Server side streak computation for habits (current and longest streak per habit as an aggregation). And eventually a React rewrite of the client; the state object plus render functions in `app.js` map almost one to one onto components with hooks, so most of the logic would carry over.

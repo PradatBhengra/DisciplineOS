@@ -4,12 +4,17 @@ const markSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: [true, 'Subject name is required'], trim: true, maxlength: 100 },
     maxMarks: { type: Number, min: 0, default: 0 },
-    quiz1: { type: Number, default: null },
-    midSem: { type: Number, default: null },
-    quiz2: { type: Number, default: null },
-    assignment: { type: Number, default: null },
-    endSem: { type: Number, default: null }
+    quiz1: { type: Number, min: 0, default: null },
+    midSem: { type: Number, min: 0, default: null },
+    quiz2: { type: Number, min: 0, default: null },
+    assignment: { type: Number, min: 0, default: null },
+    endSem: { type: Number, min: 0, default: null }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
+
+markSchema.pre('validate', function (next) {
+    if (this.maxMarks > 0 && this.total > this.maxMarks) this.invalidate('maxMarks', 'Total cannot be more than max marks');
+    next();
+});
 
 // total and grade are computed here so the client can never store a wrong value
 markSchema.virtual('total').get(function () {
